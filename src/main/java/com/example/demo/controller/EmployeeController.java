@@ -4,7 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.hibernate.jdbc.Expectations;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.StreamingHttpOutputMessage.Body;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,51 +28,75 @@ public class EmployeeController {
 	@Autowired
 	EmployeeRopository employeeRopository;
 
-	private List<Employee> data = new ArrayList<Employee>();
-
 	@GetMapping("/employee")
-	public List<Employee> getEmployee() {
-		return employeeRopository.findAll();
+	public ResponseEntity<Object> getEmployee() {
+		try {
+			List<Employee> employees = employeeRopository.findAll();
+			return new ResponseEntity<>(employees, HttpStatus.OK);
+		} catch (Exception e) {
+			return new ResponseEntity<>("Internal server error", HttpStatus.INTERNAL_SERVER_ERROR);
+		}
 	}
 
 	@PostMapping("/employee")
-	public Employee addEmployee(@RequestBody Employee body) {
-		return employeeRopository.save(body);
+	public ResponseEntity<Object> addEmployee(@RequestBody Employee body) {
+		try {
+			Employee employee = employeeRopository.save(body);
+			return new ResponseEntity<>(employee, HttpStatus.CREATED);
+		} catch (Exception e) {
+			return new ResponseEntity<>("Internal server error", HttpStatus.INTERNAL_SERVER_ERROR);
+		}
 	}
 
 	@GetMapping("/employee/{employeeId}")
-	public Optional<Employee> getEmployeeDetail(@PathVariable Integer employeeId) {
+	public ResponseEntity<Object> getEmployeeDetail(@PathVariable Integer employeeId) {
 
-		Optional<Employee> employee = employeeRopository.findById(employeeId);
+		try {
+			Optional<Employee> employee = employeeRopository.findById(employeeId);
+			if (employee.isPresent()) {
+				return new ResponseEntity<>(employee, HttpStatus.OK);
+			} else {
+				return new ResponseEntity<>("Employee Not Found", HttpStatus.BAD_REQUEST);
+			}
 
-		return employee;
+		} catch (Exception e) {
+			return new ResponseEntity<>("Internal server error", HttpStatus.INTERNAL_SERVER_ERROR);
+		}
 	}
 
 	@PutMapping("/employee/{employeeId}")
-	public Optional<Employee> updateEmployee(@PathVariable Integer employeeId, @RequestBody Employee body) {
-		Optional<Employee> employee = employeeRopository.findById(employeeId);
-		if (employee.isPresent()) {
-			employee.get().setFirstName(body.getFirstName());
-			employee.get().setFirstName(body.getLastName());
-			employee.get().setSalary(body.getSalary());
+	public ResponseEntity<Object> updateEmployee(@PathVariable Integer employeeId, @RequestBody Employee body) {
+		try {
+			Optional<Employee> employee = employeeRopository.findById(employeeId);
+			if (employee.isPresent()) {
+				employee.get().setFirstName(body.getFirstName());
+				employee.get().setFirstName(body.getLastName());
+				employee.get().setSalary(body.getSalary());
 
-			employeeRopository.save(employee.get());
+				employeeRopository.save(employee.get());
 
-			return employee;
-		} else {
-			return null;
+				return new ResponseEntity<>(employee, HttpStatus.CREATED);
+			} else {
+				return new ResponseEntity<>(employee, HttpStatus.BAD_REQUEST);
+			}
+		} catch (Exception e) {
+			return new ResponseEntity<>("Internal server error", HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
 	@DeleteMapping("/employee/{employeeId}")
-	public String deleteEmplpoEmployee(@PathVariable Integer employeeId) {
-		Optional<Employee> employee = employeeRopository.findById(employeeId);
-		if (employee.isPresent()) {
-			employeeRopository.delete(employee.get());
+	public ResponseEntity<Object> deleteEmplpoEmployee(@PathVariable Integer employeeId) {
+		try {
+			Optional<Employee> employee = employeeRopository.findById(employeeId);
+			if (employee.isPresent()) {
+				employeeRopository.delete(employee.get());
 
-			return "DELETE SUCCESS";
-		} else {
-			return "employee not found";
+				return new ResponseEntity<>("DELETE SUCCESS", HttpStatus.OK);
+			} else {
+				return new ResponseEntity<>("Employee not found", HttpStatus.BAD_REQUEST);
+			}
+		} catch (Exception e) {
+			return new ResponseEntity<>("Internal server error", HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 }
