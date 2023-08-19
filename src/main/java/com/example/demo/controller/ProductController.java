@@ -2,7 +2,9 @@ package com.example.demo.controller;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -12,77 +14,64 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.demo.model.Employee;
 import com.example.demo.model.Product;
+import com.example.demo.repository.ProductRepository;
 
 @RestController
 public class ProductController {
-	
-	private List<Product> data = new ArrayList<Product>();
-	
+	@Autowired
+	ProductRepository productRepository;
+	private List<Product> data= new ArrayList<Product>();
+
 	@GetMapping("/product")
-	public List<Product> getProduct(){
-		return data;
+	public List<Product> getProduct() {
+		return productRepository.findAll();
 	}
-	
+	@GetMapping("/product/{id}")
+	public Optional<Product> getProduct(@PathVariable Integer id) {
+		Optional<Product> product =productRepository.findById(id);
+		return product;
+	}
+	@GetMapping("/search_text")
+	public List<Product> getProduct(@RequestParam String text) {
+		List<Product> products = new ArrayList<Product>();
+		products.add((Product) productRepository.findByProductNameContaining(text));
+		products.add((Product) productRepository.findByProductDetailContaining(text));
+		
+		return products;
+	}
+
 	@PostMapping("/product")
 	public Product addProduct(@RequestBody Product body) {
-		
-		for(int i =0; i < data.size(); i++) {
-			if(data.get(i).getProductId() == body.getProductId()) {
-					return null;
-		}
-		}
-		data.add(body);
+		productRepository.save(body);
 		return body;
 	}
-	@GetMapping("/product/{productId}")
-	public Product getProductDetail(@PathVariable Integer productId) {
-		System.out.println("product = "+ productId);
-		for(int i =0; i < data.size(); i++) {
-			if(data.get(i).getProductId() == productId) {
-					return data.get(i);
+	
+	@PutMapping("/product/{id}")
+	public Optional<Product> updatProduct(@PathVariable Integer id,@RequestBody Product body) {
+		Optional<Product> product = productRepository.findById(id);
+		if(product.isPresent()) {
+			product.get().setProductAmount(body.getProductAmount());
+			product.get().setProductDetail(body.getProductDetail());
+			product.get().setProductName(body.getProductName());
+			product.get().setProductPrice(body.getProductPrice());
+			productRepository.save(product.get());
+		}else {
+			return null;
 		}
-		}
-		return null;
+		return product;
 	}
-	@PutMapping("/product/{productId}")
-	public Product updateProduct(@PathVariable Integer productId,@RequestBody Product body) {
-		for(int i =0; i < data.size(); i++) {
-			if(data.get(i).getProductId() == productId) {
-					data.get(i).setProductId(body.getProductId());
-					data.get(i).setProductName(body.getProductName());
-					data.get(i).setProductPrice(body.getProductPrice());
-					data.get(i).setProductAmount(body.getProductAmount());
-					data.get(i).setProductDetail(body.getProductDetail());
-			return data.get(i);
-		}
-		}
-		return null;
-	}
-	@DeleteMapping("/product/{productId}")
-	public String deleteProduct(@PathVariable Integer productId) {
-		for(int i =0; i < data.size(); i++) {
-			if(data.get(i).getProductId() == productId) {
-					data.remove(i);
-			return "delete success";
+	
+	@DeleteMapping("/product/{id}")
+	public String deleteProduct(@PathVariable Integer id) {
+		Optional<Product> product = productRepository.findById(id);
+		if (product.isPresent()) {
+			productRepository.deleteById(id);
+			return "Deleted!";
+		}else {
+			return "Not found!";
 		}
 		
 	}
-		return "employee not found";
-	
+
 }
-	@GetMapping("/product/search_text")
-	public ArrayList<Product> searchProduct(@RequestParam String productName) {
-		ArrayList<Product> doc = new ArrayList<Product>();
-		for(int i =0; i < data.size(); i++) {
-			if(data.get(i).getProductName().contains(productName)||(data.get(i).getProductDetail().contains(productName))) {
-				doc.add(data.get(i));
-		}
-		}
-		return doc;
-	}
-}
-
-
-
