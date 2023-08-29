@@ -16,6 +16,11 @@ public class Student {
 	private String firstName;
 	private String surName;
 	private String email;
+	
+	
+	public Student() {
+		super();
+	}
 	public Student(Integer studentId, String stdId, String firstName, String surName, String email) {
 		super();
 		this.studentId = studentId;

@@ -27,7 +27,9 @@ public class StudentController {
 	@GetMapping("/students")
 	public ResponseEntity<Object> getStudents() {
 		try {
+			System.out.println("hi");
 			List<Student> students = studentRepository.findAll();
+			System.out.println("hi2");
 			return new ResponseEntity<>(students, HttpStatus.OK);
 
 		} catch (Exception e) {
